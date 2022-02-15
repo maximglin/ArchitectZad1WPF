@@ -1,0 +1,54 @@
+﻿<Window x:Class="ArchitectZad1WPF.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ArchitectZad1WPF"
+        mc:Ignorable="d"
+        Title="Почта ЭЦП" Height="550" Width="800">
+    <Grid>
+        <TabControl>
+            <TabItem Header="Отправка">
+                <StackPanel>
+                    <TextBlock>Сервер</TextBlock>
+                    <TextBox x:Name="server">smtp.yandex.ru</TextBox>
+                    <TextBlock>Логин</TextBlock>
+                    <TextBox x:Name="login">vaspupstk@yandex.ru</TextBox>
+                    <TextBlock>Пароль</TextBlock>
+                    <PasswordBox x:Name="password"></PasswordBox>
+
+
+                    <TextBlock Margin="0 30 0 0">Кому</TextBlock>
+                    <TextBox x:Name="address">elen.glin@yandex.ru</TextBox>
+                    <TextBlock>Тема письма</TextBlock>
+                    <TextBox x:Name="theme">Тестовое письмо</TextBox>
+                    <TextBlock>Текст письма</TextBlock>
+                    <TextBox MinHeight="75" MaxHeight="75" MaxLines="100" AcceptsReturn="True" x:Name="text"></TextBox>
+                    <TextBlock>Прикрепляемый файл</TextBlock>
+                    <local:OpenFile x:Name="file"></local:OpenFile>
+                    <TextBlock>Владелец ЭЦП</TextBlock>
+                    <TextBox x:Name="ecp">Maxim</TextBox>
+                    <Button Padding="10" Margin="10 20 10 0" Click="Button_Click">Отправить</Button>
+                </StackPanel>
+            </TabItem>
+            
+            
+            <TabItem Header="Получение">
+                <StackPanel>
+                    <TextBlock>Сервер</TextBlock>
+                    <TextBox x:Name="rserver">imap.yandex.ru</TextBox>
+                    <TextBlock>Логин</TextBlock>
+                    <TextBox x:Name="rlogin">elen.glin@yandex.ru</TextBox>
+                    <TextBlock>Пароль</TextBlock>
+                    <PasswordBox x:Name="rpassword"></PasswordBox>
+
+
+                    <TextBlock Margin="0 30 0 0">Владелец ЭЦП</TextBlock>
+                    <TextBox x:Name="recp">Maxim</TextBox>
+                    <Button Padding="10" Margin="0 20 0 0" Click="Button_Click_1">Получить</Button>
+                </StackPanel>
+                
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>
