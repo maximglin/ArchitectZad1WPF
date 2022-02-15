@@ -144,9 +144,9 @@ namespace ArchitectZad1WPF
                                 dialog.FileName = attachment.FileName.Remove(attachment.FileName.LastIndexOf('.'));
                                 if (dialog.ShowDialog() == true)
                                 {
-                                    File.WriteAllBytes(dialog.FileName, unsigned_data);
+                                    File.WriteAllBytes(dialog.FileName, unsigned_data); 
+                                    MessageBox.Show("Расшифровано и сохранено успешно!");
                                 }
-                                MessageBox.Show("Расшифровано и сохранено успешно!");
                             }
                             else
                                 MessageBox.Show("Прикрепленных файлов не было...");
