@@ -8,44 +8,60 @@
         Title="Почта ЭЦП" Height="550" Width="800">
     <Grid>
         <TabControl>
-            <TabItem Header="Отправка">
+            <TabItem Header="Отправка" DataContext="{Binding SenderContext}">
                 <StackPanel>
                     <TextBlock>Сервер</TextBlock>
-                    <TextBox x:Name="server">smtp.yandex.ru</TextBox>
+                    <TextBox x:Name="server" Text="{Binding PostalServer}"></TextBox>
                     <TextBlock>Логин</TextBlock>
-                    <TextBox x:Name="login">vaspupstk@yandex.ru</TextBox>
+                    <TextBox x:Name="login" Text="{Binding Login}"></TextBox>
                     <TextBlock>Пароль</TextBlock>
-                    <PasswordBox x:Name="password"></PasswordBox>
+                    <PasswordBox x:Name="password" PasswordChanged="password_PasswordChanged"></PasswordBox>
 
 
                     <TextBlock Margin="0 30 0 0">Кому</TextBlock>
-                    <TextBox x:Name="address">elen.glin@yandex.ru</TextBox>
+                    <TextBox x:Name="address" Text="{Binding RecipientAddress}"></TextBox>
                     <TextBlock>Тема письма</TextBlock>
-                    <TextBox x:Name="theme">Тестовое письмо</TextBox>
+                    <TextBox x:Name="theme" Text="{Binding Subject}"></TextBox>
                     <TextBlock>Текст письма</TextBlock>
-                    <TextBox MinHeight="75" MaxHeight="75" MaxLines="100" AcceptsReturn="True" x:Name="text"></TextBox>
+                    <TextBox MinHeight="75" MaxHeight="75" MaxLines="100" AcceptsReturn="True" x:Name="text" Text="{Binding MailText}"></TextBox>
                     <TextBlock>Прикрепляемый файл</TextBlock>
-                    <local:OpenFile x:Name="file"></local:OpenFile>
-                    <TextBlock>Владелец ЭЦП</TextBlock>
-                    <TextBox x:Name="ecp">Maxim</TextBox>
-                    <Button Padding="10" Margin="10 20 10 0" Click="Button_Click">Отправить</Button>
+                    <local:OpenFile x:Name="file" AbsolutePath="{Binding AttachedFilePath, Mode=OneWayToSource}"></local:OpenFile>
+                    <TextBlock>Симметричное шифрование:</TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                            <ColumnDefinition Width="auto"></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0">Включить шифрование:</TextBlock>
+                        <CheckBox Grid.Column="1" IsChecked="{Binding EncryptionEnabled}" x:Name="encEnabled"></CheckBox>
+                        <TextBlock Grid.Column="2">Парольная фраза:</TextBlock>
+                        <PasswordBox Grid.Column="3" PasswordChanged="PasswordBox_PasswordChanged" x:Name="encPassword" IsEnabled="{Binding ElementName=encEnabled, Path=IsChecked}"></PasswordBox>
+                    </Grid>
+                    <TextBlock Visibility="Collapsed">Владелец ЭЦП</TextBlock>
+                    <TextBox x:Name="ecp" Visibility="Collapsed" Text="{Binding Signer}"></TextBox>
+                    <Button Padding="10" Margin="10 20 10 0" Command="{Binding SendCommand}">Отправить</Button>
                 </StackPanel>
             </TabItem>
-            
-            
-            <TabItem Header="Получение">
+
+
+            <TabItem Header="Получение" DataContext="{Binding RecipientContext}">
                 <StackPanel>
+                    <TextBlock>От кого искать:</TextBlock>
+                    <TextBox x:Name="senderaddress" Text="{Binding SenderAddress}" Margin="0 0 0 20"></TextBox>
+                    
                     <TextBlock>Сервер</TextBlock>
-                    <TextBox x:Name="rserver">imap.yandex.ru</TextBox>
+                    <TextBox x:Name="rserver" Text="{Binding PostalServer}"></TextBox>
                     <TextBlock>Логин</TextBlock>
-                    <TextBox x:Name="rlogin">elen.glin@yandex.ru</TextBox>
+                    <TextBox x:Name="rlogin" Text="{Binding Login}"></TextBox>
                     <TextBlock>Пароль</TextBlock>
-                    <PasswordBox x:Name="rpassword"></PasswordBox>
+                    <PasswordBox x:Name="rpassword" PasswordChanged="rpassword_PasswordChanged"></PasswordBox>
 
 
-                    <TextBlock Margin="0 30 0 0">Владелец ЭЦП</TextBlock>
-                    <TextBox x:Name="recp">Maxim</TextBox>
-                    <Button Padding="10" Margin="0 20 0 0" Click="Button_Click_1">Получить</Button>
+                    <TextBlock Margin="0 30 0 0" Visibility="Collapsed">Владелец ЭЦП</TextBlock>
+                    <TextBox x:Name="recp" Visibility="Collapsed">Maxim</TextBox>
+                    <Button Padding="10" Margin="0 20 0 0" Command="{Binding ReceiveCommand}">Получить</Button>
                 </StackPanel>
                 
             </TabItem>
