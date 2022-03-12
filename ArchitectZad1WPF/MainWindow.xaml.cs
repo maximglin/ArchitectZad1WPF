@@ -19,6 +19,7 @@ using Limilabs.Mail;
 using Microsoft.Win32;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography;
+using System.Security.Cryptography.Pkcs;
 
 namespace ArchitectZad1WPF
 {
@@ -54,181 +55,23 @@ namespace ArchitectZad1WPF
                 store.Close();
             }
         }
-        private static byte[] GetSignedHash(byte[] file, RSA rsaPrivateKey)
-        {
-            byte[] encryptedHash;
-            using (Aes aes = Aes.Create())
-            {
-                // Create instance of Aes for
-                // symetric encryption of the data.
-                aes.KeySize = 256;
-                aes.Mode = CipherMode.CBC;
-                using (ICryptoTransform transform = aes.CreateEncryptor())
-                {
-                    byte[] keyEncrypted = rsaPrivateKey.Encrypt(aes.Key, RSAEncryptionPadding.Pkcs1);
-
-                    // Create byte arrays to contain
-                    // the length values of the key and IV.
-                    byte[] LenK = new byte[4];
-                    byte[] LenIV = new byte[4];
-
-                    int lKey = keyEncrypted.Length;
-                    LenK = BitConverter.GetBytes(lKey);
-                    int lIV = aes.IV.Length;
-                    LenIV = BitConverter.GetBytes(lIV);
-
-                    // Write the following to the FileStream
-                    // for the encrypted file (outFs):
-                    // - length of the key
-                    // - length of the IV
-                    // - ecrypted key
-                    // - the IV
-                    // - the encrypted cipher content
-
-                    SHA256 sha = SHA256.Create();
-                    byte[] hash = sha.ComputeHash(file);
-                    using (MemoryStream outFs = new MemoryStream())
-                    {
-
-                        outFs.Write(LenK, 0, 4);
-                        outFs.Write(LenIV, 0, 4);
-                        outFs.Write(keyEncrypted, 0, lKey);
-                        outFs.Write(aes.IV, 0, lIV);
-
-                        // Now write the cipher text using
-                        // a CryptoStream for encrypting.
-                        using (CryptoStream outStreamEncrypted = new CryptoStream(outFs, transform, CryptoStreamMode.Write))
-                        {
-                            // blockSizeBytes can be any arbitrary size.
-                            int blockSizeBytes = aes.BlockSize / 8;
-
-                            outStreamEncrypted.Write(hash, 0, hash.Length);
-
-                            outStreamEncrypted.FlushFinalBlock();
-                            outStreamEncrypted.Close();
-                        }
-                        encryptedHash = outFs.ToArray();
-                        outFs.Close();
-                    }
-                }
-            }
-            return encryptedHash;
-        }
-
-
-        private static bool CheckSignWithPublicKey(byte[] file, byte[] encryptedHash, RSA rsaPublicKey) 
+        private static byte[] GetSignedHash(byte[] file, RSA privateKey)
         {
             SHA256 sha = SHA256.Create();
             byte[] hash = sha.ComputeHash(file);
-            byte[] decryptedHash;
 
-            // Create instance of Aes for
-            // symetric decryption of the data.
-            using (Aes aes = Aes.Create())
-            {
-                aes.KeySize = 256;
-                aes.Mode = CipherMode.CBC;
-
-                // Create byte arrays to get the length of
-                // the encrypted key and IV.
-                // These values were stored as 4 bytes each
-                // at the beginning of the encrypted package.
-                byte[] LenK = new byte[4];
-                byte[] LenIV = new byte[4];
+            byte[] signedHash = privateKey.SignHash(hash, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+           
+            return signedHash;
+        }
 
 
-                // Use FileStream objects to read the encrypted
-                // file (inFs) and save the decrypted file (outFs).
-                using (MemoryStream inFs = new MemoryStream(encryptedHash))
-                {
+        private static bool VerifySignWithPublicKey(byte[] file, byte[] signedHash, RSA publicKey) 
+        {
+            SHA256 sha = SHA256.Create();
+            byte[] hash = sha.ComputeHash(file);
 
-                    inFs.Seek(0, SeekOrigin.Begin);
-                    inFs.Seek(0, SeekOrigin.Begin);
-                    inFs.Read(LenK, 0, 3);
-                    inFs.Seek(4, SeekOrigin.Begin);
-                    inFs.Read(LenIV, 0, 3);
-
-                    // Convert the lengths to integer values.
-                    int lenK = BitConverter.ToInt32(LenK, 0);
-                    int lenIV = BitConverter.ToInt32(LenIV, 0);
-
-                    // Determine the start position of
-                    // the cipher text (startC)
-                    // and its length(lenC).
-                    int startC = lenK + lenIV + 8;
-                    int lenC = (int)inFs.Length - startC;
-
-                    // Create the byte arrays for
-                    // the encrypted Aes key,
-                    // the IV, and the cipher text.
-                    byte[] KeyEncrypted = new byte[lenK];
-                    byte[] IV = new byte[lenIV];
-
-                    // Extract the key and IV
-                    // starting from index 8
-                    // after the length values.
-                    inFs.Seek(8, SeekOrigin.Begin);
-                    inFs.Read(KeyEncrypted, 0, lenK);
-                    inFs.Seek(8 + lenK, SeekOrigin.Begin);
-                    inFs.Read(IV, 0, lenIV);
-
-                    // Use RSA
-                    // to decrypt the Aes key.
-                    byte[] KeyDecrypted = rsaPublicKey.Decrypt(KeyEncrypted, RSAEncryptionPadding.Pkcs1);
-                    
-
-                    // Decrypt the key.
-                    using (ICryptoTransform transform = aes.CreateDecryptor(KeyDecrypted, IV))
-                    {
-
-                        // Decrypt the cipher text from
-                        // from the FileSteam of the encrypted
-                        // file (inFs) into the FileStream
-                        // for the decrypted file (outFs).
-                        using (MemoryStream outFs = new MemoryStream())
-                        {
-
-                            int count = 0;
-
-                            int blockSizeBytes = aes.BlockSize / 8;
-                            byte[] data = new byte[blockSizeBytes];
-
-                            // By decrypting a chunk a time,
-                            // you can save memory and
-                            // accommodate large files.
-
-                            // Start at the beginning
-                            // of the cipher text.
-                            inFs.Seek(startC, SeekOrigin.Begin);
-                            using (CryptoStream outStreamDecrypted = new CryptoStream(outFs, transform, CryptoStreamMode.Write))
-                            {
-                                do
-                                {
-                                    count = inFs.Read(data, 0, blockSizeBytes);
-                                    outStreamDecrypted.Write(data, 0, count);
-                                }
-                                while (count > 0);
-
-                                outStreamDecrypted.FlushFinalBlock();
-                                outStreamDecrypted.Close();
-                            }
-
-                            decryptedHash = outFs.ToArray();
-                            outFs.Close();
-                        }
-                        inFs.Close();
-                    }
-                }
-            }
-
-            if (decryptedHash.Length != hash.Length)
-                return false;
-
-            for(int i = 0; i < decryptedHash.Length; i++)
-                if(decryptedHash[i] != hash[i])
-                    return false;
-
-            return true;
+            return publicKey.VerifyHash(hash, signedHash, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -289,7 +132,7 @@ namespace ArchitectZad1WPF
 
 
                     var ms2 = new MemoryStream();
-                    byte[] encryptedHash = GetSignedHash(data, cert.GetRSAPublicKey());
+                    byte[] encryptedHash = GetSignedHash(data, cert.GetRSAPrivateKey());
                     ms2.Write(encryptedHash, 0, encryptedHash.Length);
                     ms2.Position = 0;
                     var ct2 = new System.Net.Mime.ContentType(System.Net.Mime.MediaTypeNames.Text.Plain);
@@ -345,7 +188,7 @@ namespace ArchitectZad1WPF
                             {
                                 var cert = GetCertificateFromStore(recp.Text);
 
-                                var checkResult = CheckSignWithPublicKey(attachment.Data, signAttachment.Data, cert.GetRSAPrivateKey());
+                                var checkResult = VerifySignWithPublicKey(attachment.Data, signAttachment.Data, cert.GetRSAPublicKey());
 
                                 MessageBox.Show(checkResult?"Оригинальность файла подтверждена!":"Авторство НЕ подтверждено...");
 
